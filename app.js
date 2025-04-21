@@ -85,14 +85,34 @@ nms.on('prePublish', (id, StreamPath, args) => {
   }
 });
 
-nms.on('donePublish', (id, StreamPath, args) => {
-  console.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+nms.on('donePublish', (session) => {
+  // Não podemos serializar todo o objeto de sessão porque contém estruturas circulares
+  console.log('[NodeEvent on donePublish - Session Properties]', 
+    `id: ${session.id}, streamPath: ${session.streamPath}`);
   
-  // Extract stream name from the path
-  const streamName = StreamPath.split('/')[2];
-  
-  // Parar gravação se estiver ativa
-  storageManager.stopRecording(streamName);
+  try {
+    if (session && session.publishStreamPath) {
+      console.log('[NodeEvent on donePublish]', `id=${session.id} StreamPath=${session.publishStreamPath}`);
+      
+      // Extract stream name from the path
+      const streamName = session.publishStreamPath.split('/')[2];
+      
+      // Parar gravação se estiver ativa
+      storageManager.stopRecording(streamName);
+    } else if (session && session.streamPath) {
+      console.log('[NodeEvent on donePublish]', `id=${session.id} StreamPath=${session.streamPath}`);
+      
+      // Extract stream name from the path
+      const streamName = session.streamPath.split('/')[2];
+      
+      // Parar gravação se estiver ativa
+      storageManager.stopRecording(streamName);
+    } else {
+      console.log('[NodeEvent on donePublish] Não foi possível determinar o streamPath');
+    }
+  } catch (error) {
+    console.error('[NodeEvent on donePublish] Erro:', error);
+  }
 });
 
 // Execute a limpeza programada
